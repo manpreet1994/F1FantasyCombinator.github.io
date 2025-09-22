@@ -1,0 +1,5 @@
+{
+  "name": "F1 Fantasy Combinator",
+  "description": "An application to explore, compare, and get suggestions for your F1 Fantasy team. It provides up-to-date statistics, driver/team comparisons with performance charts, and race schedule tracking.",
+  "requestFramePermissions": []
+}

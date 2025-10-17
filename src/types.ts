@@ -30,7 +30,8 @@ export interface FantasyData {
 
 export interface Race {
   round: number;
-  name: string;
+  name?: string; // Keep for compatibility
+  race_name?: string; // Corrected property from the schedule API
   date: string;
 }
 

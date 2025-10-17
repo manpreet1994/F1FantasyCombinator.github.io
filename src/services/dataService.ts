@@ -1,32 +1,43 @@
 
 import type { FantasyData, Race, RaceInfo, Driver, Constructor, ApiFantasyResponse } from '../types';
+import { apiConfig } from '../config';
 
-const API_URL = "http://localhost:3001/api/statistics/2025";
-const FALLBACK_DATA_URL = "/data/fantasy-data.json";
+type NameMapping = { [key: string]: string };
 
-// Name mappings to convert abbreviations to full names
-const driverNameMapping: { [key: string]: string } = {
-  DOO: "Jack Doohan", GAS: "Pierre Gasly", ALO: "Fernando Alonso", STR: "Lance Stroll",
-  HAM: "Lewis Hamilton", LEC: "Charles Leclerc", BEA: "Oliver Bearman", OCO: "Esteban Ocon",
-  BOR: "Gabriel Bortoleto", HUL: "Nico Hülkenberg", NOR: "Lando Norris", PIA: "Oscar Piastri",
-  ANT: "Andrea Kimi Antonelli", RUS: "George Russell", LAW: "Liam Lawson", VER: "Max Verstappen",
-  HAD: "Isack Hadjar", TSU: "Yuki Tsunoda", ALB: "Alexander Albon", SAI: "Carlos Sainz",
-  COL: "Franco Colapinto"
-};
+let driverNameMapping: NameMapping | null = null;
+let constructorNameMapping: NameMapping | null = null;
 
-const constructorNameMapping: { [key: string]: string } = {
-  ALP: "Alpine", AST: "Aston Martin", FER: "Ferrari", HAA: "Haas F1 Team",
-  KCK: "Kick Sauber", MCL: "McLaren", MER: "Mercedes", RED: "Red Bull Racing",
-  VRB: "RB", WIL: "Williams"
+const fetchMappings = async (): Promise<void> => {
+  if (driverNameMapping && constructorNameMapping) return;
+
+  try {
+    const [driverRes, constructorRes] = await Promise.all([
+      fetch(apiConfig.mappings.drivers),
+      fetch(apiConfig.mappings.constructors)
+    ]);
+
+    if (!driverRes.ok) {
+      throw new Error(`Failed to fetch driver mappings: ${driverRes.statusText}`);
+    }
+    if (!constructorRes.ok) {
+      throw new Error(`Failed to fetch constructor mappings: ${constructorRes.statusText}`);
+    }
+    driverNameMapping = await driverRes.json();
+    constructorNameMapping = await constructorRes.json();
+  } catch (error) {
+    console.error("Failed to fetch name mappings:", error);
+    driverNameMapping = {};
+    constructorNameMapping = {};
+  }
 };
 
 const getDriverDisplayName = (id: string): string => {
   const abbr = id.split('_')[1];
-  return driverNameMapping[abbr] || id;
+  return driverNameMapping?.[abbr] || id;
 };
 
 const getConstructorDisplayName = (id: string): string => {
-  return constructorNameMapping[id] || id;
+  return constructorNameMapping?.[id] || id;
 };
 
 const transformFantasyData = (apiData: ApiFantasyResponse): FantasyData | null => {
@@ -99,18 +110,20 @@ const transformFantasyData = (apiData: ApiFantasyResponse): FantasyData | null =
 };
 
 export const fetchFantasyData = async (): Promise<{ data: FantasyData | null, isStale: boolean }> => {
+  await fetchMappings();
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(apiConfig.fantasyData.url);
     if (!response.ok) {
       throw new Error("Network response was not ok");
     }
     const apiData: ApiFantasyResponse = await response.json();
     const data = transformFantasyData(apiData);
+
     return { data, isStale: false };
   } catch (error) {
     console.error("Failed to fetch live fantasy data, falling back to local data:", error);
     try {
-      const fallbackResponse = await fetch(FALLBACK_DATA_URL);
+      const fallbackResponse = await fetch(apiConfig.fantasyData.fallbackUrl);
       const fallbackApiData: ApiFantasyResponse = await fallbackResponse.json();
       const data = transformFantasyData(fallbackApiData);
       return { data: data, isStale: true };
@@ -123,31 +136,38 @@ export const fetchFantasyData = async (): Promise<{ data: FantasyData | null, is
 
 export const fetchRaceSchedule = async (): Promise<RaceInfo> => {
   try {
-    const response = await fetch('/data/races.json');
-    const schedule: Race[] = await response.json();
+    const response = await fetch(apiConfig.raceSchedule.url);
+    if (!response.ok) {
+      throw new Error(`Network response was not ok: ${response.statusText}`);
+    }
+    const scheduleData: { races: Race[] } = await response.json();
+    console.log("Fetched race schedule data:", scheduleData);
+    // The schedule API uses 'race_name' while other parts might use 'name'.
+    // Let's normalize it to use 'name' for consistency within the app.
+    const schedule = scheduleData.races.map(race => ({
+      ...race,
+      name: race.race_name || race.name,
+    }));
     
+    // Get the current date at midnight UTC to compare against race dates
     const now = new Date();
-    // To get the date part only, ignoring time
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
-    let currentRace: Race | null = null;
     let upcomingRace: Race | null = null;
+    let lastRace: Race | null = null;
 
-    // Sort races by date just in case they are not in order
     schedule.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     for (const race of schedule) {
-      const raceDate = new Date(race.date + 'T23:59:59Z'); // Consider end of day for comparison
+      const raceDate = new Date(race.date); // Assumes date is in 'YYYY-MM-DD' format, parsed as UTC
       if (raceDate >= today) {
-        if (!upcomingRace) {
-          upcomingRace = race;
-        }
+        if (!upcomingRace) upcomingRace = race;
       } else {
-        currentRace = race;
+        lastRace = race;
       }
     }
 
-    return { currentRace, upcomingRace };
+    return { currentRace: lastRace, upcomingRace };
   } catch (error) {
     console.error("Failed to fetch race schedule:", error);
     return { currentRace: null, upcomingRace: null };

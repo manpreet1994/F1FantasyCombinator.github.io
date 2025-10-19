@@ -60,43 +60,72 @@ const transformSimpleFantasyData = (simpleData: SimpleFantasyData): FantasyData 
   if (!simpleData) return null;
 
   const driversMap: Map<string, Driver> = new Map();
+  const constructorsMap: Map<string, Constructor> = new Map();
   const raceRounds = Object.keys(simpleData).sort((a, b) => parseInt(a) - parseInt(b));
 
   for (const round of raceRounds) {
     const roundData = simpleData[round];
-    for (const driverAbbr in roundData) {
-      const driverData = roundData[driverAbbr];
-      // The ID is not present, so we'll have to be creative or assume a convention.
-      // Let's assume we can find a full ID from the driver mapping.
-      // This part is tricky without a proper ID in the source.
-      // For now, we'll use the abbreviation as a key part.
-      const driverId = `UNKNOWN_${driverAbbr}`; // Placeholder ID
-      const displayName = getDriverDisplayName(driverAbbr);
-      const nameParts = displayName.split(' ');
 
-      let driver = driversMap.get(driverId);
-      if (!driver) {
-        driver = {
-          id: driverId,
-          display_name: displayName,
-          first_name: nameParts[0],
-          last_name: nameParts.slice(1).join(' '),
-          price: String(driverData.fantasy_cost),
-          season_score: '0',
-          scores_by_race: {},
-        };
+    const processEntities = (entities: { [key: string]: any } | undefined, type: 'driver' | 'constructor') => {
+      if (!entities) return;
+      for (const abbr in entities) {
+        const entityData = entities[abbr];
+        if (type === 'driver') {
+          const driverId = `UNKNOWN_${abbr}`; // Placeholder ID
+          const displayName = getDriverDisplayName(abbr);
+          const nameParts = displayName.split(' ');
+
+          let driver = driversMap.get(driverId);
+          if (!driver) {
+            driver = {
+              id: driverId,
+              display_name: displayName,
+              first_name: nameParts[0],
+              last_name: nameParts.slice(1).join(' '),
+              price: String(entityData.fantasy_cost),
+              season_score: '0',
+              scores_by_race: {},
+            };
+          }
+          driver.season_score = String(Number(driver.season_score) + entityData.fantasy_score);
+          driver.scores_by_race[round] = String(entityData.fantasy_score);
+          driver.price = String(entityData.fantasy_cost);
+          driversMap.set(driverId, driver);
+        } else { // constructor
+          const constructorId = abbr;
+          let constructor = constructorsMap.get(constructorId);
+          if (!constructor) {
+            constructor = {
+              id: constructorId,
+              display_name: getConstructorDisplayName(constructorId),
+              price: String(entityData.fantasy_cost),
+              season_score: '0',
+              scores_by_race: {},
+            };
+          }
+          constructor.season_score = String(Number(constructor.season_score) + entityData.fantasy_score);
+          constructor.scores_by_race[round] = String(entityData.fantasy_score);
+          constructor.price = String(entityData.fantasy_cost);
+          constructorsMap.set(constructorId, constructor);
+        }
       }
-      driver.season_score = String(Number(driver.season_score) + driverData.fantasy_score);
-      driver.scores_by_race[round] = String(driverData.fantasy_score);
-      driver.price = String(driverData.fantasy_cost);
-      driversMap.set(driverId, driver);
+    };
+
+    if (roundData.drivers || roundData.constructors) {
+      // New format: { drivers: {...}, constructors: {...} }
+      processEntities(roundData.drivers, 'driver');
+      processEntities(roundData.constructors, 'constructor');
+    } else {
+      // Old simple format: { ALB: {...}, ALO: {...} }
+      // This is a bit of a guess, but we assume if no 'drivers' key, it's the old format
+      processEntities(roundData, 'driver');
     }
   }
 
   return {
     last_updated: new Date().toISOString(),
     season: new Date().getFullYear(), // Or get from somewhere else
-    constructors: [], // This format doesn't have constructors
+    constructors: Array.from(constructorsMap.values()),
     drivers: Array.from(driversMap.values()),
   };
 };

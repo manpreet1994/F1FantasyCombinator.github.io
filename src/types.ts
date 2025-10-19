@@ -102,14 +102,20 @@ export interface ApiFantasyResponse {
 }
 
 // Interfaces for the simple/alternative fantasy data structure
-export interface SimpleDriverRaceData {
+export interface SimpleEntityRaceData {
   fantasy_cost: number;
   fantasy_score: number;
   [key: string]: any; // for other properties like fp1_position etc.
 }
 
+export interface SimpleRaceRoundData {
+  drivers?: { [driverAbbr: string]: SimpleEntityRaceData };
+  constructors?: { [constructorAbbr: string]: SimpleEntityRaceData };
+  [driverAbbr: string]: SimpleEntityRaceData | { [key: string]: SimpleEntityRaceData } | undefined; // For backward compatibility
+}
+
 export interface SimpleFantasyData {
-  [round: string]: { [driverAbbr: string]: SimpleDriverRaceData };
+  [round: string]: SimpleRaceRoundData;
 }
 
 export interface TeamMappingItem {

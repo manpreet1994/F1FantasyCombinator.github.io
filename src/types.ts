@@ -111,3 +111,8 @@ export interface SimpleDriverRaceData {
 export interface SimpleFantasyData {
   [round: string]: { [driverAbbr: string]: SimpleDriverRaceData };
 }
+
+export interface TeamMappingItem {
+  id: string;
+  name: string;
+}

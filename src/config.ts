@@ -10,6 +10,6 @@ export const apiConfig = {
   },
   mappings: {
     drivers: `https://manpreet1994.pythonanywhere.com/driver_mapping/${F1_FANTASY_YEAR}`,
-    constructors: "/data/constructor-codes.json",
+    constructors: `https://manpreet1994.pythonanywhere.com/team_mapping/${F1_FANTASY_YEAR}`,
   }
 };

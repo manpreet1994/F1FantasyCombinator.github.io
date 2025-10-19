@@ -1,11 +1,12 @@
 
-import type { FantasyData, Race, RaceInfo, Driver, Constructor, ApiFantasyResponse, SimpleFantasyData } from '../types';
+import type { FantasyData, Race, RaceInfo, Driver, Constructor, ApiFantasyResponse, SimpleFantasyData, TeamMappingItem } from '../types';
 import { apiConfig } from '../config';
 
-type NameMapping = { [key: string]: string };
+type DriverNameMapping = { [key: string]: { name: string; [key: string]: any } };
+type ConstructorNameMapping = { [key: string]: string };
 
-let driverNameMapping: NameMapping | null = null;
-let constructorNameMapping: NameMapping | null = null;
+let driverNameMapping: DriverNameMapping | null = null;
+let constructorNameMapping: ConstructorNameMapping | null = null;
 
 const fetchMappings = async (): Promise<void> => {
   if (driverNameMapping && constructorNameMapping) return;
@@ -22,12 +23,19 @@ const fetchMappings = async (): Promise<void> => {
     if (!constructorRes.ok) {
       throw new Error(`Failed to fetch constructor mappings: ${constructorRes.statusText}`);
     }
-    const drivers = await driverRes.json();
-    const constructors = await constructorRes.json();
+    const drivers: DriverNameMapping = await driverRes.json();
+    const constructors: TeamMappingItem[] | ConstructorNameMapping = await constructorRes.json();
     console.log("Fetched driver name mapping:", drivers);
     console.log("Fetched constructor name mapping:", constructors);
     driverNameMapping = drivers;
-    constructorNameMapping = constructors;
+    if (Array.isArray(constructors)) {
+      constructorNameMapping = constructors.reduce((acc: ConstructorNameMapping, team) => {
+        acc[team.id] = team.name;
+        return acc;
+      }, {});
+    } else {
+      constructorNameMapping = constructors;
+    }
   } catch (error) {
     console.error("Failed to fetch name mappings:", error);
     driverNameMapping = {};
@@ -36,8 +44,12 @@ const fetchMappings = async (): Promise<void> => {
 };
 
 const getDriverDisplayName = (id: string): string => {
-  const abbr = id.split('_')[1];
-  return driverNameMapping?.[abbr] || id;
+  // The id can be in format 'FER_LEC' or just 'LEC'.
+  // We need to handle both to get the abbreviation.
+  const idParts = id.split('_');
+  const abbr = idParts.length > 1 ? idParts[1] : id;
+
+  return driverNameMapping?.[abbr]?.name || abbr;
 };
 
 const getConstructorDisplayName = (id: string): string => {
@@ -180,7 +192,12 @@ export const fetchFantasyData = async (): Promise<{ data: FantasyData | null, is
     try {
       const fallbackResponse = await fetch(apiConfig.fantasyData.fallbackUrl);
       const fallbackApiData: ApiFantasyResponse | SimpleFantasyData = await fallbackResponse.json();
-      const data = transformFantasyData(fallbackApiData);
+      let data;
+      if ((fallbackApiData as ApiFantasyResponse).seasonResult) {
+        data = transformFantasyData(fallbackApiData as ApiFantasyResponse);
+      } else {
+        data = transformSimpleFantasyData(fallbackApiData as SimpleFantasyData);
+      }
       return { data: data, isStale: true };
     } catch (fallbackError) {
       console.error("Failed to fetch fallback data:", fallbackError);

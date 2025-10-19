@@ -2,8 +2,7 @@ const F1_FANTASY_YEAR = 2025;
 
 export const apiConfig = {
   fantasyData: {
-    url: `https://manpreet1994.pythonanywhere.com/fantasy_scores/${F1_FANTASY_YEAR}`,
-    fallbackUrl: "/data/fantasy-data.json",
+    url: `https://manpreet1994.pythonanywhere.com/fantasy_scores/${F1_FANTASY_YEAR}`
   },
   raceSchedule: {
     url: `https://manpreet1994.pythonanywhere.com/schedule/${F1_FANTASY_YEAR}`,

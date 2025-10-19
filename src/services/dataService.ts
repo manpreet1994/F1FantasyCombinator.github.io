@@ -217,21 +217,8 @@ export const fetchFantasyData = async (): Promise<{ data: FantasyData | null, is
 
     return { data, isStale: false };
   } catch (error) {
-    console.error("Failed to fetch live fantasy data, falling back to local data:", error);
-    try {
-      const fallbackResponse = await fetch(apiConfig.fantasyData.fallbackUrl);
-      const fallbackApiData: ApiFantasyResponse | SimpleFantasyData = await fallbackResponse.json();
-      let data;
-      if ((fallbackApiData as ApiFantasyResponse).seasonResult) {
-        data = transformFantasyData(fallbackApiData as ApiFantasyResponse);
-      } else {
-        data = transformSimpleFantasyData(fallbackApiData as SimpleFantasyData);
-      }
-      return { data: data, isStale: true };
-    } catch (fallbackError) {
-      console.error("Failed to fetch fallback data:", fallbackError);
-      return { data: null, isStale: true };
-    }
+    console.error("Failed to fetch fantasy data:", error);
+    return { data: null, isStale: true };
   }
 };
 

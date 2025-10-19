@@ -100,3 +100,14 @@ export interface ApiFantasyResponse {
   seasonResult: ApiSeasonResult;
   races: any[];
 }
+
+// Interfaces for the simple/alternative fantasy data structure
+export interface SimpleDriverRaceData {
+  fantasy_cost: number;
+  fantasy_score: number;
+  [key: string]: any; // for other properties like fp1_position etc.
+}
+
+export interface SimpleFantasyData {
+  [round: string]: { [driverAbbr: string]: SimpleDriverRaceData };
+}

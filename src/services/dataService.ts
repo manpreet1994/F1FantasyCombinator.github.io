@@ -1,5 +1,5 @@
 
-import type { FantasyData, Race, RaceInfo, Driver, Constructor, ApiFantasyResponse } from '../types';
+import type { FantasyData, Race, RaceInfo, Driver, Constructor, ApiFantasyResponse, SimpleFantasyData } from '../types';
 import { apiConfig } from '../config';
 
 type NameMapping = { [key: string]: string };
@@ -22,8 +22,12 @@ const fetchMappings = async (): Promise<void> => {
     if (!constructorRes.ok) {
       throw new Error(`Failed to fetch constructor mappings: ${constructorRes.statusText}`);
     }
-    driverNameMapping = await driverRes.json();
-    constructorNameMapping = await constructorRes.json();
+    const drivers = await driverRes.json();
+    const constructors = await constructorRes.json();
+    console.log("Fetched driver name mapping:", drivers);
+    console.log("Fetched constructor name mapping:", constructors);
+    driverNameMapping = drivers;
+    constructorNameMapping = constructors;
   } catch (error) {
     console.error("Failed to fetch name mappings:", error);
     driverNameMapping = {};
@@ -38,6 +42,51 @@ const getDriverDisplayName = (id: string): string => {
 
 const getConstructorDisplayName = (id: string): string => {
   return constructorNameMapping?.[id] || id;
+};
+
+const transformSimpleFantasyData = (simpleData: SimpleFantasyData): FantasyData | null => {
+  if (!simpleData) return null;
+
+  const driversMap: Map<string, Driver> = new Map();
+  const raceRounds = Object.keys(simpleData).sort((a, b) => parseInt(a) - parseInt(b));
+
+  for (const round of raceRounds) {
+    const roundData = simpleData[round];
+    for (const driverAbbr in roundData) {
+      const driverData = roundData[driverAbbr];
+      // The ID is not present, so we'll have to be creative or assume a convention.
+      // Let's assume we can find a full ID from the driver mapping.
+      // This part is tricky without a proper ID in the source.
+      // For now, we'll use the abbreviation as a key part.
+      const driverId = `UNKNOWN_${driverAbbr}`; // Placeholder ID
+      const displayName = getDriverDisplayName(driverAbbr);
+      const nameParts = displayName.split(' ');
+
+      let driver = driversMap.get(driverId);
+      if (!driver) {
+        driver = {
+          id: driverId,
+          display_name: displayName,
+          first_name: nameParts[0],
+          last_name: nameParts.slice(1).join(' '),
+          price: String(driverData.fantasy_cost),
+          season_score: '0',
+          scores_by_race: {},
+        };
+      }
+      driver.season_score = String(Number(driver.season_score) + driverData.fantasy_score);
+      driver.scores_by_race[round] = String(driverData.fantasy_score);
+      driver.price = String(driverData.fantasy_cost);
+      driversMap.set(driverId, driver);
+    }
+  }
+
+  return {
+    last_updated: new Date().toISOString(),
+    season: new Date().getFullYear(), // Or get from somewhere else
+    constructors: [], // This format doesn't have constructors
+    drivers: Array.from(driversMap.values()),
+  };
 };
 
 const transformFantasyData = (apiData: ApiFantasyResponse): FantasyData | null => {
@@ -117,14 +166,20 @@ export const fetchFantasyData = async (): Promise<{ data: FantasyData | null, is
       throw new Error("Network response was not ok");
     }
     const apiData: ApiFantasyResponse = await response.json();
-    const data = transformFantasyData(apiData);
+    // Check if it's the detailed format or the simple one
+    let data;
+    if (apiData.seasonResult) {
+      data = transformFantasyData(apiData);
+    } else {
+      data = transformSimpleFantasyData(apiData as unknown as SimpleFantasyData);
+    }
 
     return { data, isStale: false };
   } catch (error) {
     console.error("Failed to fetch live fantasy data, falling back to local data:", error);
     try {
       const fallbackResponse = await fetch(apiConfig.fantasyData.fallbackUrl);
-      const fallbackApiData: ApiFantasyResponse = await fallbackResponse.json();
+      const fallbackApiData: ApiFantasyResponse | SimpleFantasyData = await fallbackResponse.json();
       const data = transformFantasyData(fallbackApiData);
       return { data: data, isStale: true };
     } catch (fallbackError) {

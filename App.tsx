@@ -11,11 +11,11 @@ import type { FantasyData, RaceInfo, View } from './types';
 
 const StaleDataBanner: React.FC<{ onDismiss: () => void }> = ({ onDismiss }) => {
   return (
-    <div className="bg-yellow-500/10 border border-yellow-400 text-yellow-300 px-4 py-3 rounded-md relative mb-4" role="alert">
+    <div className="bg-yellow-400/10 border border-yellow-400/30 text-yellow-200 px-4 py-3 rounded-md relative mb-4" role="alert">
       <strong className="font-bold">Stale Data!</strong>
       <span className="block sm:inline ml-2">Could not fetch the latest fantasy data. Showing cached information.</span>
-      <button onClick={onDismiss} className="absolute top-0 bottom-0 right-0 px-4 py-3">
-        <svg className="fill-current h-6 w-6 text-yellow-400" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+      <button onClick={onDismiss} className="absolute top-0 bottom-0 right-0 px-4 py-3" aria-label="Dismiss">
+        <svg className="fill-current h-6 w-6 text-yellow-300 hover:text-yellow-200" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
       </button>
     </div>
   );
@@ -48,7 +48,7 @@ const App: React.FC = () => {
     if (isLoading && !fantasyData) {
       return (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-f1-red"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-sky-400"></div>
         </div>
       );
     }
@@ -70,7 +70,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-f1-dark font-sans">
+    <div className="min-h-screen bg-slate-900 text-slate-300 font-sans">
       <Header raceInfo={raceInfo} onRefresh={loadData} isLoading={isLoading} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Navigation activeView={activeView} setActiveView={setActiveView} />

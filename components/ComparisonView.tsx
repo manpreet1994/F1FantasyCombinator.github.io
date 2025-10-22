@@ -20,7 +20,7 @@ const ComparisonSelector: React.FC<{
     <select
       value={selectedValue}
       onChange={onChange}
-      className="w-full bg-f1-gray border border-slate-600 text-white rounded-md p-2 focus:ring-2 focus:ring-f1-red focus:border-f1-red"
+      className="w-full bg-slate-800 border border-slate-600 text-slate-200 rounded-md p-2 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
     >
       <option value="">Select...</option>
       {options.map((opt) => (
@@ -32,10 +32,10 @@ const ComparisonSelector: React.FC<{
   </div>
 );
 
-const StatCard: React.FC<{ title: string; value: string | number; color?: string }> = ({ title, value, color = 'text-white' }) => (
-  <div className="bg-f1-gray p-4 rounded-lg text-center">
+const StatCard: React.FC<{ title: string; value: string | number; color?: string }> = ({ title, value, color = 'text-slate-100' }) => (
+  <div className="bg-slate-800/80 p-4 rounded-lg text-center">
     <p className="text-sm text-slate-400 uppercase">{title}</p>
-    <p className={`text-2xl font-bold ${color}`}>{value}</p>
+    <p className={`text-2xl font-bold ${color} mt-1`}>{value}</p>
   </div>
 );
 
@@ -95,12 +95,12 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ drivers, constructors }
   }, []);
 
   return (
-    <div className="bg-f1-light-dark p-6 rounded-lg shadow-lg">
+    <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h2 className="text-xl font-bold text-white">Compare {mode === 'drivers' ? 'Drivers' : 'Constructors'}</h2>
-        <div className="flex space-x-2 bg-f1-gray p-1 rounded-lg">
-          <button onClick={() => handleModeChange('drivers')} className={`px-3 py-1 text-sm rounded-md ${mode === 'drivers' ? 'bg-f1-red text-white' : 'hover:bg-slate-600'}`}>Drivers</button>
-          <button onClick={() => handleModeChange('constructors')} className={`px-3 py-1 text-sm rounded-md ${mode === 'constructors' ? 'bg-f1-red text-white' : 'hover:bg-slate-600'}`}>Constructors</button>
+        <h2 className="text-xl font-bold text-slate-100">Compare {mode === 'drivers' ? 'Drivers' : 'Constructors'}</h2>
+        <div className="flex space-x-1 bg-slate-900/70 p-1 rounded-lg">
+          <button onClick={() => handleModeChange('drivers')} className={`px-3 py-1 text-sm rounded-md transition-colors ${mode === 'drivers' ? 'bg-sky-500 text-white' : 'text-slate-300 hover:bg-slate-700/50'}`}>Drivers</button>
+          <button onClick={() => handleModeChange('constructors')} className={`px-3 py-1 text-sm rounded-md transition-colors ${mode === 'constructors' ? 'bg-sky-500 text-white' : 'text-slate-300 hover:bg-slate-700/50'}`}>Constructors</button>
         </div>
       </div>
 
@@ -121,29 +121,29 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ drivers, constructors }
 
           {/* Chart */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Points per Race</h3>
+            <h3 className="text-lg font-semibold mb-4 text-slate-200">Points per Race</h3>
             <div className="w-full h-80">
               {recharts ? (
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
-                        <XAxis dataKey="name" stroke="#A0AEC0" />
-                        <YAxis stroke="#A0AEC0" />
+                        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                        <XAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                        <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
                         <Tooltip
                             contentStyle={{
-                                backgroundColor: '#2D3748',
-                                border: '1px solid #4A5568',
-                                color: '#E2E8F0',
+                                backgroundColor: 'rgba(2, 6, 23, 0.8)', // slate-950 with opacity
+                                borderColor: '#334155', // slate-700
+                                color: '#cbd5e1', // slate-300
                             }}
-                            cursor={{ fill: 'rgba(113, 128, 150, 0.2)' }}
+                            cursor={{ fill: 'rgba(14, 165, 233, 0.1)' }} // sky-500 with opacity
                         />
-                        <Legend wrapperStyle={{ color: '#E2E8F0' }} />
-                        <Line type="monotone" dataKey={item1.display_name} stroke="#38B2AC" strokeWidth={2} activeDot={{ r: 8 }} />
+                        <Legend wrapperStyle={{ color: '#cbd5e1' }} />
+                        <Line type="monotone" dataKey={item1.display_name} stroke="#38bdf8" strokeWidth={2} activeDot={{ r: 8 }} />
                         <Line type="monotone" dataKey={item2.display_name} stroke="#ED64A6" strokeWidth={2} activeDot={{ r: 8 }} />
                     </LineChart>
                   </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full bg-f1-gray rounded-md">
+                <div className="flex items-center justify-center h-full bg-slate-800/80 rounded-md">
                   <p className="text-slate-400">Loading chart...</p>
                 </div>
               )}

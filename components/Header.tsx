@@ -14,7 +14,7 @@ const Header: React.FC<HeaderProps> = ({ raceInfo, onRefresh, isLoading }) => {
   };
 
   return (
-    <header className="grid grid-cols-3 items-center p-4 md:p-6 border-b border-f1-gray">
+    <header className="grid grid-cols-3 items-center p-4 md:p-6 border-b border-slate-800">
       {/* Last Race */}
       <div className="text-sm text-left">
         <p className="text-slate-400 font-medium tracking-wide">LAST RACE</p>
@@ -23,13 +23,13 @@ const Header: React.FC<HeaderProps> = ({ raceInfo, onRefresh, isLoading }) => {
       
       {/* Title and Refresh Button */}
       <div className="flex justify-center items-center gap-x-4">
-        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight font-['Titillium_Web']">
-            F1 <span className="text-f1-red">Fantasy Combinator</span>
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-100 tracking-tight font-['Titillium_Web']">
+            F1 <span className="text-sky-400">Fantasy Combinator</span>
         </h1>
         <button
           onClick={onRefresh}
           disabled={isLoading}
-          className="p-2 rounded-full text-slate-300 hover:bg-f1-light-dark hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-full text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Refresh data"
         >
           <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -41,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({ raceInfo, onRefresh, isLoading }) => {
       {/* Upcoming Race */}
       <div className="text-sm text-right">
         <p className="text-slate-400 font-medium tracking-wide">UPCOMING RACE</p>
-        <p className="font-bold text-f1-red">{raceInfo.upcomingRace?.name || 'N/A'}</p>
+        <p className="font-bold text-sky-400">{raceInfo.upcomingRace?.name || 'N/A'}</p>
         <p className="text-slate-300">{raceInfo.upcomingRace ? formatDate(raceInfo.upcomingRace.date) : 'TBD'}</p>
       </div>
     </header>

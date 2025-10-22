@@ -84,7 +84,7 @@ const ExplorationView: React.FC<ExplorationViewProps> = ({ drivers, constructors
     if (mode === 'drivers') {
       return (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-f1-gray">
+          <table className="min-w-full divide-y divide-slate-700">
             <thead>
               <tr>
                 <SortableTableHeader<Driver> label="Name" sortKey="display_name" requestSort={requestDriverSort} sortConfig={driverSortConfig} />
@@ -92,12 +92,12 @@ const ExplorationView: React.FC<ExplorationViewProps> = ({ drivers, constructors
                 <SortableTableHeader<Driver> label="Total Pts" sortKey="season_score" requestSort={requestDriverSort} sortConfig={driverSortConfig} className="w-32 text-right" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-f1-gray">
+            <tbody className="divide-y divide-slate-800">
               {sortedDrivers.map((driver) => (
-                <tr key={driver.id} className="hover:bg-f1-gray/50 transition-colors">
-                  <td className="p-3 whitespace-nowrap font-medium">{driver.display_name}</td>
+                <tr key={driver.id} className="hover:bg-slate-800/60 transition-colors">
+                  <td className="p-3 whitespace-nowrap font-medium text-slate-100">{driver.display_name}</td>
                   <td className="p-3 whitespace-nowrap w-32 text-right text-cyan-400">${Number(driver.price).toFixed(1)}M</td>
-                  <td className="p-3 whitespace-nowrap w-32 text-right font-semibold text-lg">{driver.season_score}</td>
+                  <td className="p-3 whitespace-nowrap w-32 text-right font-semibold text-lg text-slate-100">{driver.season_score}</td>
                 </tr>
               ))}
             </tbody>
@@ -108,7 +108,7 @@ const ExplorationView: React.FC<ExplorationViewProps> = ({ drivers, constructors
 
     return (
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-f1-gray">
+        <table className="min-w-full divide-y divide-slate-700">
           <thead>
             <tr>
               <SortableTableHeader<Constructor> label="Name" sortKey="display_name" requestSort={requestConstructorSort} sortConfig={constructorSortConfig} />
@@ -116,12 +116,12 @@ const ExplorationView: React.FC<ExplorationViewProps> = ({ drivers, constructors
               <SortableTableHeader<Constructor> label="Total Pts" sortKey="season_score" requestSort={requestConstructorSort} sortConfig={constructorSortConfig} className="w-32 text-right" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-f1-gray">
+          <tbody className="divide-y divide-slate-800">
             {sortedConstructors.map((constructor) => (
-              <tr key={constructor.id} className="hover:bg-f1-gray/50 transition-colors">
-                <td className="p-3 whitespace-nowrap font-medium">{constructor.display_name}</td>
+              <tr key={constructor.id} className="hover:bg-slate-800/60 transition-colors">
+                <td className="p-3 whitespace-nowrap font-medium text-slate-100">{constructor.display_name}</td>
                 <td className="p-3 whitespace-nowrap w-32 text-right text-cyan-400">${Number(constructor.price).toFixed(1)}M</td>
-                <td className="p-3 whitespace-nowrap w-32 text-right font-semibold text-lg">{constructor.season_score}</td>
+                <td className="p-3 whitespace-nowrap w-32 text-right font-semibold text-lg text-slate-100">{constructor.season_score}</td>
               </tr>
             ))}
           </tbody>
@@ -131,14 +131,14 @@ const ExplorationView: React.FC<ExplorationViewProps> = ({ drivers, constructors
   };
 
   return (
-    <div className="bg-f1-light-dark rounded-lg overflow-hidden shadow-lg">
-      <div className="flex justify-between items-center p-4 border-b border-f1-gray">
-        <h2 className="text-xl font-bold text-white">
+    <div className="bg-slate-800/50 rounded-lg overflow-hidden shadow-lg">
+      <div className="flex justify-between items-center p-4 border-b border-slate-700">
+        <h2 className="text-xl font-bold text-slate-100">
           {mode === 'drivers' ? 'Drivers' : 'Constructors'}
         </h2>
-        <div className="flex space-x-2 bg-f1-gray p-1 rounded-lg">
-          <button onClick={() => setMode('drivers')} className={`px-3 py-1 text-sm rounded-md ${mode === 'drivers' ? 'bg-f1-red text-white' : 'hover:bg-slate-600'}`}>Drivers</button>
-          <button onClick={() => setMode('constructors')} className={`px-3 py-1 text-sm rounded-md ${mode === 'constructors' ? 'bg-f1-red text-white' : 'hover:bg-slate-600'}`}>Constructors</button>
+        <div className="flex space-x-1 bg-slate-900/70 p-1 rounded-lg">
+          <button onClick={() => setMode('drivers')} className={`px-3 py-1 text-sm rounded-md transition-colors ${mode === 'drivers' ? 'bg-sky-500 text-white' : 'text-slate-300 hover:bg-slate-700/50'}`}>Drivers</button>
+          <button onClick={() => setMode('constructors')} className={`px-3 py-1 text-sm rounded-md transition-colors ${mode === 'constructors' ? 'bg-sky-500 text-white' : 'text-slate-300 hover:bg-slate-700/50'}`}>Constructors</button>
         </div>
       </div>
       {renderTable()}

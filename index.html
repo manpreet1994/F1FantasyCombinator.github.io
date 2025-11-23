@@ -562,7 +562,7 @@
                 const fantasyUrlTemplate = config.api.baseUrl + config.api.fantasyDataPath;
                 const scheduleUrlTemplate = config.api.baseUrl + config.api.raceSchedulePath;
 
-                const [dataResult, raceInfo] = await Promise.all([
+                const [dataResult, raceSchedule] = await Promise.all([
                     fetchFantasyData(fantasyUrlTemplate, year),
                     fetchRaceSchedule(scheduleUrlTemplate, year)
                 ]);
@@ -573,7 +573,7 @@
                     document.getElementById('staleBanner').style.display = 'block';
                 }
 
-                updateRaceInfo(raceInfo);
+                updateRaceInfo(raceSchedule);
                 renderView();
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -607,7 +607,7 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const scheduleData = await response.json();
-                const schedule = scheduleData.schedule;
+                const schedule = scheduleData.races;
 
                 // Sort schedule by date just in case it's not ordered
                 schedule.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -619,9 +619,9 @@
                 for (const race of schedule) {
                     const raceDate = new Date(race.date + 'T' + (race.time || '23:59:59Z'));
                     if (raceDate < now) {
-                        lastRace = { name: race.raceName, date: race.date };
+                        lastRace = { name: race.race_name, date: race.date };
                     } else if (!upcomingRace) {
-                        upcomingRace = { name: race.raceName, date: race.date };
+                        upcomingRace = { name: race.race_name, date: race.date };
                     }
                 }
 

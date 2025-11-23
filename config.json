@@ -1,0 +1,7 @@
+{
+    "year": "2025",
+    "api": {
+        "fantasyDataUrl": "https://manpreet1994.pythonanywhere.com/fantasy_scores/{year}",
+        "raceScheduleUrl": "https://manpreet1994.pythonanywhere.com/schedule/{year}"
+    }
+}

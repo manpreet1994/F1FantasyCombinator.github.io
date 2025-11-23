@@ -545,16 +545,6 @@
         let currentView = 'exploration';
         let sortConfig = { drivers: { key: 'season_score', direction: 'desc' }, constructors: { key: 'season_score', direction: 'desc' } };
 
-        // API Configuration
-        const API_CONFIG = {
-            fantasyData: 'https://api.jolpi.ca/ergast/f1/fantasy/current',
-            raceSchedule: 'https://manpreet1994.pythonanywhere.com/schedule/2025',
-            mappings: {
-                drivers: 'https://api.jolpi.ca/ergast/f1/drivers/names',
-                constructors: 'https://api.jolpi.ca/ergast/f1/constructors/names'
-            }
-        };
-
         // Initialize
         loadData();
 
@@ -565,9 +555,13 @@
             refreshBtn.disabled = true;
 
             try {
+                const configResponse = await fetch('config.json');
+                const config = await configResponse.json();
+                const year = config.year;
+
                 const [dataResult, raceInfo] = await Promise.all([
-                    fetchFantasyData(),
-                    fetchRaceSchedule()
+                    fetchFantasyData(config.api.fantasyDataUrl, year),
+                    fetchRaceSchedule(config.api.raceScheduleUrl, year)
                 ]);
 
                 fantasyData = dataResult.data;
@@ -586,21 +580,26 @@
             }
         }
 
-        async function fetchFantasyData() {
+        async function fetchFantasyData(urlTemplate, year) {
+            const url = urlTemplate.replace('{year}', year);
             try {
-                // For demo purposes, using sample data
-                // In production, you'd fetch from the API
-                const sampleData = generateSampleData();
-                return { data: sampleData, isStale: false };
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return { data: data, isStale: false };
             } catch (error) {
                 console.error('Failed to fetch fantasy data:', error);
-                return { data: null, isStale: true };
+                // Fallback to sample data if API fails
+                return { data: generateSampleData(), isStale: true };
             }
         }
 
-        async function fetchRaceSchedule() {
+        async function fetchRaceSchedule(urlTemplate, year) {
+            const url = urlTemplate.replace('{year}', year);
             try {
-                const response = await fetch(API_CONFIG.raceSchedule);
+                const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

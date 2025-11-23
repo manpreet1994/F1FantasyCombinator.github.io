@@ -559,9 +559,12 @@
                 const config = await configResponse.json();
                 const year = config.year;
 
+                const fantasyUrlTemplate = config.api.baseUrl + config.api.fantasyDataPath;
+                const scheduleUrlTemplate = config.api.baseUrl + config.api.raceSchedulePath;
+
                 const [dataResult, raceInfo] = await Promise.all([
-                    fetchFantasyData(config.api.fantasyDataUrl, year),
-                    fetchRaceSchedule(config.api.raceScheduleUrl, year)
+                    fetchFantasyData(fantasyUrlTemplate, year),
+                    fetchRaceSchedule(scheduleUrlTemplate, year)
                 ]);
 
                 fantasyData = dataResult.data;

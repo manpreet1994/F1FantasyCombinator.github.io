@@ -3,6 +3,7 @@
     "api": {
         "baseUrl": "https://manpreet1994.pythonanywhere.com",
         "fantasyDataPath": "/fantasy_scores/{year}",
-        "raceSchedulePath": "/schedule/{year}"
+        "raceSchedulePath": "/schedule/{year}",
+        "avgPointsPath": "/avg_price_per_year/{year}"
     }
 }

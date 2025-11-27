@@ -561,15 +561,17 @@
 
                 const fantasyUrlTemplate = config.api.baseUrl + config.api.fantasyDataPath;
                 const scheduleUrlTemplate = config.api.baseUrl + config.api.raceSchedulePath;
+                const avgPointsUrlTemplate = config.api.baseUrl + config.api.avgPointsPath;
 
-                const [dataResult, raceSchedule] = await Promise.all([
+                const [dataResult, raceSchedule, avgPointsResult] = await Promise.all([
                     fetchFantasyData(fantasyUrlTemplate, year),
-                    fetchRaceSchedule(scheduleUrlTemplate, year)
+                    fetchRaceSchedule(scheduleUrlTemplate, year),
+                    fetchAvgPoints(avgPointsUrlTemplate, year)
                 ]);
 
-                fantasyData = dataResult.data;
+                fantasyData = processFantasyData(dataResult.data, avgPointsResult.data);
                 
-                if (dataResult.isStale) {
+                if (dataResult.isStale || avgPointsResult.isStale) {
                     document.getElementById('staleBanner').style.display = 'block';
                 }
 
@@ -595,7 +597,22 @@
             } catch (error) {
                 console.error('Failed to fetch fantasy data:', error);
                 // Fallback to sample data if API fails
-                return { data: generateSampleData(), isStale: true };
+                return { data: {}, isStale: true }; // Return empty object on failure before processing
+            }
+        }
+
+        async function fetchAvgPoints(urlTemplate, year) {
+            const url = urlTemplate.replace('{year}', year);
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return { data: data, isStale: false };
+            } catch (error) {
+                console.error('Failed to fetch average points data:', error);
+                return { data: {}, isStale: true };
             }
         }
 
@@ -632,51 +649,6 @@
             }
         }
 
-        function generateSampleData() {
-            const drivers = [
-                { id: 'VER', display_name: 'Max Verstappen', first_name: 'Max', last_name: 'Verstappen', price: '30.5', season_score: '575', scores_by_race: {'1':'25','2':'30','3':'28','4':'32','5':'26','6':'29','7':'31','8':'27','9':'33','10':'28','11':'30','12':'29','13':'31','14':'28','15':'30','16':'32','17':'28','18':'26','19':'30','20':'32','21':'28','22':'30','23':'29','24':'27'} },
-                { id: 'NOR', display_name: 'Lando Norris', first_name: 'Lando', last_name: 'Norris', price: '22.0', season_score: '498', scores_by_race: {'1':'22','2':'24','3':'26','4':'23','5':'25','6':'27','7':'24','8':'26','9':'28','10':'25','11':'27','12':'24','13':'26','14':'25','15':'27','16':'24','17':'26','18':'25','19':'27','20':'24','21':'26','22':'25','23':'24','24':'26'} },
-                { id: 'LEC', display_name: 'Charles Leclerc', first_name: 'Charles', last_name: 'Leclerc', price: '20.5', season_score: '456', scores_by_race: {'1':'20','2':'22','3':'21','4':'23','5':'22','6':'24','7':'21','8':'23','9':'22','10':'24','11':'21','12':'23','13':'22','14':'24','15':'21','16':'23','17':'22','18':'24','19':'21','20':'23','21':'22','22':'24','23':'21','24':'23'} },
-                { id: 'PIA', display_name: 'Oscar Piastri', first_name: 'Oscar', last_name: 'Piastri', price: '18.5', season_score: '425', scores_by_race: {'1':'18','2':'20','3':'19','4':'21','5':'20','6':'22','7':'19','8':'21','9':'20','10':'22','11':'19','12':'21','13':'20','14':'22','15':'19','16':'21','17':'20','18':'22','19':'19','20':'21','21':'20','22':'22','23':'19','24':'21'} },
-                { id: 'SAI', display_name: 'Carlos Sainz', first_name: 'Carlos', last_name: 'Sainz', price: '17.0', season_score: '398', scores_by_race: {'1':'17','2':'19','3':'18','4':'20','5':'19','6':'21','7':'18','8':'20','9':'19','10':'21','11':'18','12':'20','13':'19','14':'21','15':'18','16':'20','17':'19','18':'21','19':'18','20':'20','21':'19','22':'21','23':'18','24':'20'} },
-                { id: 'HAM', display_name: 'Lewis Hamilton', first_name: 'Lewis', last_name: 'Hamilton', price: '19.5', season_score: '372', scores_by_race: {'1':'16','2':'18','3':'17','4':'19','5':'18','6':'20','7':'17','8':'19','9':'18','10':'20','11':'17','12':'19','13':'18','14':'20','15':'17','16':'19','17':'18','18':'20','19':'17','20':'19','21':'18','22':'20','23':'17','24':'19'} },
-                { id: 'RUS', display_name: 'George Russell', first_name: 'George', last_name: 'Russell', price: '18.0', season_score: '365', scores_by_race: {'1':'15','2':'17','3':'16','4':'18','5':'17','6':'19','7':'16','8':'18','9':'17','10':'19','11':'16','12':'18','13':'17','14':'19','15':'16','16':'18','17':'17','18':'19','19':'16','20':'18','21':'17','22':'19','23':'16','24':'18'} },
-                { id: 'PER', display_name: 'Sergio Perez', first_name: 'Sergio', last_name: 'Perez', price: '15.5', season_score: '285', scores_by_race: {'1':'12','2':'14','3':'13','4':'15','5':'14','6':'16','7':'13','8':'15','9':'14','10':'16','11':'13','12':'15','13':'14','14':'16','15':'13','16':'15','17':'14','18':'16','19':'13','20':'15','21':'14','22':'16','23':'13','24':'15'} },
-                { id: 'ALO', display_name: 'Fernando Alonso', first_name: 'Fernando', last_name: 'Alonso', price: '12.5', season_score: '265', scores_by_race: {'1':'11','2':'13','3':'12','4':'14','5':'13','6':'15','7':'12','8':'14','9':'13','10':'15','11':'12','12':'14','13':'13','14':'15','15':'12','16':'14','17':'13','18':'15','19':'12','20':'14','21':'13','22':'15','23':'12','24':'14'} },
-                { id: 'GAS', display_name: 'Pierre Gasly', first_name: 'Pierre', last_name: 'Gasly', price: '11.0', season_score: '245', scores_by_race: {'1':'10','2':'12','3':'11','4':'13','5':'12','6':'14','7':'11','8':'13','9':'12','10':'14','11':'11','12':'13','13':'12','14':'14','15':'11','16':'13','17':'12','18':'14','19':'11','20':'13','21':'12','22':'14','23':'11','24':'13'} },
-                { id: 'STR', display_name: 'Lance Stroll', first_name: 'Lance', last_name: 'Stroll', price: '9.5', season_score: '185', scores_by_race: {'1':'8','2':'9','3':'8','4':'10','5':'9','6':'11','7':'8','8':'10','9':'9','10':'11','11':'8','12':'10','13':'9','14':'11','15':'8','16':'10','17':'9','18':'11','19':'8','20':'10','21':'9','22':'11','23':'8','24':'10'} },
-                { id: 'OCO', display_name: 'Esteban Ocon', first_name: 'Esteban', last_name: 'Ocon', price: '10.5', season_score: '225', scores_by_race: {'1':'9','2':'11','3':'10','4':'12','5':'11','6':'13','7':'10','8':'12','9':'11','10':'13','11':'10','12':'12','13':'11','14':'13','15':'10','16':'12','17':'11','18':'13','19':'10','20':'12','21':'11','22':'13','23':'10','24':'12'} },
-                { id: 'HUL', display_name: 'Nico Hulkenberg', first_name: 'Nico', last_name: 'Hulkenberg', price: '9.0', season_score: '195', scores_by_race: {'1':'8','2':'10','3':'9','4':'11','5':'10','6':'12','7':'9','8':'11','9':'10','10':'12','11':'9','12':'11','13':'10','14':'12','15':'9','16':'11','17':'10','18':'12','19':'9','20':'11','21':'10','22':'12','23':'9','24':'11'} },
-                { id: 'TSU', display_name: 'Yuki Tsunoda', first_name: 'Yuki', last_name: 'Tsunoda', price: '8.5', season_score: '175', scores_by_race: {'1':'7','2':'9','3':'8','4':'10','5':'9','6':'11','7':'8','8':'10','9':'9','10':'11','11':'8','12':'10','13':'9','14':'11','15':'8','16':'10','17':'9','18':'11','19':'8','20':'10','21':'9','22':'11','23':'8','24':'10'} },
-                { id: 'ALB', display_name: 'Alexander Albon', first_name: 'Alexander', last_name: 'Albon', price: '8.0', season_score: '165', scores_by_race: {'1':'7','2':'8','3':'7','4':'9','5':'8','6':'10','7':'7','8':'9','9':'8','10':'10','11':'7','12':'9','13':'8','14':'10','15':'7','16':'9','17':'8','18':'10','19':'7','20':'9','21':'8','22':'10','23':'7','24':'9'} },
-                { id: 'RIC', display_name: 'Daniel Ricciardo', first_name: 'Daniel', last_name: 'Ricciardo', price: '7.5', season_score: '145', scores_by_race: {'1':'6','2':'7','3':'6','4':'8','5':'7','6':'9','7':'6','8':'8','9':'7','10':'9','11':'6','12':'8','13':'7','14':'9','15':'6','16':'8','17':'7','18':'9','19':'6','20':'8','21':'7','22':'9','23':'6','24':'8'} },
-                { id: 'MAG', display_name: 'Kevin Magnussen', first_name: 'Kevin', last_name: 'Magnussen', price: '7.0', season_score: '125', scores_by_race: {'1':'5','2':'6','3':'5','4':'7','5':'6','6':'8','7':'5','8':'7','9':'6','10':'8','11':'5','12':'7','13':'6','14':'8','15':'5','16':'7','17':'6','18':'8','19':'5','20':'7','21':'6','22':'8','23':'5','24':'7'} },
-                { id: 'BOT', display_name: 'Valtteri Bottas', first_name: 'Valtteri', last_name: 'Bottas', price: '6.5', season_score: '105', scores_by_race: {'1':'4','2':'5','3':'4','4':'6','5':'5','6':'7','7':'4','8':'6','9':'5','10':'7','11':'4','12':'6','13':'5','14':'7','15':'4','16':'6','17':'5','18':'7','19':'4','20':'6','21':'5','22':'7','23':'4','24':'6'} },
-                { id: 'ZHO', display_name: 'Zhou Guanyu', first_name: 'Zhou', last_name: 'Guanyu', price: '6.0', season_score: '85', scores_by_race: {'1':'3','2':'4','3':'3','4':'5','5':'4','6':'6','7':'3','8':'5','9':'4','10':'6','11':'3','12':'5','13':'4','14':'6','15':'3','16':'5','17':'4','18':'6','19':'3','20':'5','21':'4','22':'6','23':'3','24':'5'} },
-                { id: 'SAR', display_name: 'Logan Sargeant', first_name: 'Logan', last_name: 'Sargeant', price: '5.5', season_score: '65', scores_by_race: {'1':'2','2':'3','3':'2','4':'4','5':'3','6':'5','7':'2','8':'4','9':'3','10':'5','11':'2','12':'4','13':'3','14':'5','15':'2','16':'4','17':'3','18':'5','19':'2','20':'4','21':'3','22':'5','23':'2','24':'4'} }
-            ];
-
-            const constructors = [
-                { id: 'RED', display_name: 'Red Bull Racing', price: '32.0', season_score: '860', scores_by_race: {'1':'37','2':'44','3':'41','4':'47','5':'40','6':'45','7':'44','8':'41','9':'47','10':'43','11':'45','12':'44','13':'46','14':'43','15':'45','16':'47','17':'43','18':'41','19':'45','20':'47','21':'43','22':'46','23':'44','24':'42'} },
-                { id: 'MCL', display_name: 'McLaren', price: '28.5', season_score: '923', scores_by_race: {'1':'40','2':'44','3':'45','4':'44','5':'45','6':'49','7':'43','8':'47','9':'48','10':'47','11':'46','12':'45','13':'46','14':'47','15':'46','16':'45','17':'46','18':'47','19':'46','20':'45','21':'46','22':'47','23':'43','24':'47'} },
-                { id: 'FER', display_name: 'Ferrari', price: '27.5', season_score: '854', scores_by_race: {'1':'37','2':'41','3':'39','4':'43','5':'41','6':'45','7':'39','8':'43','9':'41','10':'45','11':'39','12':'43','13':'41','14':'45','15':'39','16':'43','17':'41','18':'45','19':'39','20':'43','21':'41','22':'45','23':'39','24':'43'} },
-                { id: 'MER', display_name: 'Mercedes', price: '25.5', season_score: '737', scores_by_race: {'1':'31','2':'35','3':'33','4':'37','5':'35','6':'39','7':'33','8':'37','9':'35','10':'39','11':'33','12':'37','13':'35','14':'39','15':'33','16':'37','17':'35','18':'39','19':'33','20':'37','21':'35','22':'39','23':'33','24':'37'} },
-                { id: 'AST', display_name: 'Aston Martin', price: '14.5', season_score: '450', scores_by_race: {'1':'19','2':'22','3':'20','4':'24','5':'22','6':'26','7':'20','8':'24','9':'22','10':'26','11':'20','12':'24','13':'22','14':'26','15':'20','16':'24','17':'22','18':'26','19':'20','20':'24','21':'22','22':'26','23':'20','24':'24'} },
-                { id: 'ALP', display_name: 'Alpine', price: '13.0', season_score: '470', scores_by_race: {'1':'19','2':'23','3':'21','4':'25','5':'23','6':'27','7':'21','8':'25','9':'23','10':'27','11':'21','12':'25','13':'23','14':'27','15':'21','16':'25','17':'23','18':'27','19':'21','20':'25','21':'23','22':'27','23':'21','24':'25'} },
-                { id: 'HAA', display_name: 'Haas F1 Team', price: '9.5', season_score: '320', scores_by_race: {'1':'13','2':'16','3':'14','4':'18','5':'16','6':'20','7':'14','8':'18','9':'16','10':'20','11':'14','12':'18','13':'16','14':'20','15':'14','16':'18','17':'16','18':'20','19':'14','20':'18','21':'16','22':'20','23':'14','24':'18'} },
-                { id: 'RB', display_name: 'RB F1 Team', price: '9.0', season_score: '320', scores_by_race: {'1':'13','2':'16','3':'14','4':'18','5':'16','6':'20','7':'14','8':'18','9':'16','10':'20','11':'14','12':'18','13':'16','14':'20','15':'14','16':'18','17':'16','18':'20','19':'14','20':'18','21':'16','22':'20','23':'14','24':'18'} },
-                { id: 'WIL', display_name: 'Williams', price: '8.5', season_score: '250', scores_by_race: {'1':'10','2':'12','3':'11','4':'14','5':'12','6':'15','7':'11','8':'14','9':'12','10':'15','11':'11','12':'14','13':'12','14':'15','15':'11','16':'14','17':'12','18':'15','19':'11','20':'14','21':'12','22':'15','23':'11','24':'14'} },
-                { id: 'ALF', display_name: 'Alfa Romeo', price: '8.0', season_score: '190', scores_by_race: {'1':'7','2':'9','3':'8','4':'11','5':'9','6':'13','7':'8','8':'11','9':'9','10':'13','11':'8','12':'11','13':'9','14':'13','15':'8','16':'11','17':'9','18':'13','19':'8','20':'11','21':'9','22':'13','23':'8','24':'11'} }
-            ];
-
-            return {
-                last_updated: new Date().toISOString(),
-                season: 2024,
-                drivers,
-                constructors
-            };
-        }
-
         function updateRaceInfo(raceInfo) {
             const lastRaceEl = document.getElementById('lastRace');
             const upcomingRaceEl = document.getElementById('upcomingRace');
@@ -703,6 +675,34 @@
                 upcomingRaceEl.textContent = 'N/A';
                 upcomingDateEl.textContent = 'TBD';
             }
+        }
+
+        function processFantasyData(raceScoresData, avgPointsData) {
+            if (!avgPointsData) {
+                return { drivers: [], constructors: [] };
+            }
+        
+            const processItems = (itemsObject) => {
+                if (!itemsObject) return [];
+                return Object.entries(itemsObject).map(([id, data]) => ({
+                    id: id,
+                    display_name: data.display_name || id, // Fallback to ID if display_name is not present
+                    price: data.latest_price,
+                    season_score: data.avg_score,
+                    scores_by_race: {} // Keeping this for compatibility with comparison view
+                }));
+            };
+        
+            // The user-provided format seems to be just for drivers.
+            // Assuming avgPointsData is the object for drivers.
+            // If constructors have a similar structure, they would be under a 'constructors' key.
+            const drivers = processItems(avgPointsData.drivers || avgPointsData);
+            const constructors = processItems(avgPointsData.constructors);
+        
+            return {
+                drivers,
+                constructors
+            };
         }
 
         // View management
@@ -769,6 +769,7 @@
 
         function renderExplorationTable(mode) {
             const tableContainer = document.getElementById('explorationTable');
+            console.log(fantasyData)
             const items = mode === 'drivers' ? fantasyData.drivers : fantasyData.constructors;
             const config = sortConfig[mode];
             
@@ -801,7 +802,7 @@
             const rows = sortedItems.map(item => `
                 <tr>
                     <td class="driver-name">${item.display_name}</td>
-                    <td class="price text-right">${Number(item.price).toFixed(1)}M</td>
+                    <td class="price text-right">${item.price ? Number(item.price).toFixed(1) + 'M' : 'N/A'}</td>
                     <td class="points text-right">${item.season_score}</td>
                 </tr>
             `).join('');
@@ -818,13 +819,13 @@
                             </th>
                             <th class="text-right">
                                 <button onclick="sortExploration('price')" class="${config.key === 'price' ? 'sorted' : ''}">
-                                    <span>Price</span>
+                                    <span>Latest Price</span>
                                     ${getSortIcon('price')}
                                 </button>
                             </th>
                             <th class="text-right">
                                 <button onclick="sortExploration('season_score')" class="${config.key === 'season_score' ? 'sorted' : ''}">
-                                    <span>Total Pts</span>
+                                    <span>Avg Pts</span>
                                     ${getSortIcon('season_score')}
                                 </button>
                             </th>
